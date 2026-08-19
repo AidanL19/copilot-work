@@ -3,60 +3,817 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bootstrap Layout Recreation</title>
+  <title>First-Person Darts</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet">
   <style>
-    body { font-family: "Times New Roman", Times, serif; }
-    .page-shell { min-height: 100vh; padding: 28px; background: #fff; }
-    .topbar, .site-header, .site-footer, .aside, .content { color: #111; font-weight: 700; }
-    .topbar { color: #fff; }
-    .topbar { min-height: 72px; background: #3100ff; }
-    .site-header { min-height: 56px; background: #f4654c; }
-    .aside-left { background: #f5d500; }
-    .content { background: #54b9f5; }
-    .aside-right { background: #ef65b9; }
-    .site-footer { min-height: 56px; background: #99e68b; }
-    .middle-row { flex: 1; }
-    .aside, .content { min-height: 180px; }
-    .bar-title { color: #fff; letter-spacing: .2px; }
-    .topbar-links { right: 1rem; }
-    .topbar-links a { color: #fff; text-decoration: none; font-weight: 700; }
-    .topbar-links i { font-size: 1.05rem; line-height: 1; }
-    .hero-copy { max-width: 40rem; line-height: 1.12; }
-    @media (min-width: 768px) {
-      .middle-row { min-height: 540px; }
-      .aside, .content { min-height: 540px; }
-      .hero-copy { margin-top: 1.75rem; margin-left: 1.75rem; }
+    :root {
+      --top: #3600ff;
+      --header: #f2644c;
+      --left: #f6d300;
+      --center: #54b9f5;
+      --right: #ef65b9;
+      --footer: #9be58d;
+      --ink: #111;
+    }
+
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: "Times New Roman", Times, serif;
+      background: #fff;
+    }
+
+    .page-shell {
+      min-height: 100vh;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      background: #fff;
+    }
+
+    .topbar, .site-header, .site-footer, .aside, .content {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .topbar {
+      min-height: 72px;
+      background: var(--top);
+      color: #fff;
+      position: relative;
+    }
+
+    .bar-title {
+      color: #fff;
+      letter-spacing: .2px;
+    }
+
+    .topbar-links {
+      right: 1rem;
+    }
+
+    .topbar-links a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+    }
+
+    .topbar-links i { font-size: 1rem; }
+
+    .site-header {
+      min-height: 56px;
+      background: var(--header);
+    }
+
+    .middle-row { flex: 1; min-height: 540px; }
+
+    .aside { min-height: 540px; }
+
+    .aside-left { background: var(--left); }
+    .content { background: var(--center); position: relative; overflow: hidden; }
+    .aside-right { background: var(--right); }
+    .site-footer { min-height: 56px; background: var(--footer); }
+
+    .game-shell {
+      width: 100%;
+      height: 100%;
+      min-height: 540px;
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(.7rem, 1.8vw, 1.25rem);
+      text-shadow: 0 1px 2px rgba(255,255,255,.2);
+    }
+
+    .hud-top, .hud-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: .75rem;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .panel {
+      background: rgba(255,255,255,.2);
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: .9rem;
+      padding: .65rem .8rem;
+      backdrop-filter: blur(5px);
+    }
+
+    .title {
+      font-size: .95rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .small {
+      font-size: .98rem;
+      line-height: 1.15;
+    }
+
+    .score {
+      font-size: clamp(1.4rem, 3.2vw, 2.4rem);
+      line-height: 1;
+    }
+
+    .switch-wrap {
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+      pointer-events: auto;
+    }
+
+    .switch-btn {
+      border: 0;
+      background: rgba(17, 17, 17, .88);
+      color: #fff;
+      padding: .7rem 1rem;
+      border-radius: .8rem;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(0,0,0,.16);
+    }
+
+    .switch-btn:active { transform: translateY(1px); }
+
+    .player-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .35rem .65rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,.2);
+      font-size: .95rem;
+    }
+
+    .center-hint {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      padding: .8rem 1rem;
+      border-radius: 999px;
+      background: rgba(0,0,0,.22);
+      font-size: clamp(.95rem, 1.9vw, 1.1rem);
+    }
+
+    @media (max-width: 767.98px) {
+      .page-shell { padding: 16px; }
+      .middle-row { min-height: 420px; }
+      .aside, .game-shell { min-height: 220px; }
+      .content { min-height: 420px; }
     }
   </style>
 </head>
 <body>
-  <div class="page-shell d-flex flex-column">
-    <nav class="topbar position-relative d-flex align-items-center justify-content-center rounded-0">
+  <div class="page-shell">
+    <nav class="topbar d-flex align-items-center justify-content-center">
       <div class="bar-title position-absolute top-50 start-50 translate-middle fs-4">Link</div>
       <div class="topbar-links position-absolute top-50 end-0 translate-middle-y d-flex align-items-center gap-3 me-3 flex-wrap justify-content-end">
-        <a href="#home" aria-label="Home"><i class="lni lni-home me-1"></i><span class="d-none d-sm-inline">Home</span></a>
-        <a href="#work" aria-label="Work"><i class="lni lni-layout me-1"></i><span class="d-none d-sm-inline">Work</span></a>
-        <a href="#contact" aria-label="Contact"><i class="lni lni-envelope me-1"></i><span class="d-none d-sm-inline">Contact</span></a>
+        <a href="#home" aria-label="Home"><i class="lni lni-home"></i><span class="d-none d-sm-inline">Home</span></a>
+        <a href="#work" aria-label="Work"><i class="lni lni-layout"></i><span class="d-none d-sm-inline">Work</span></a>
+        <a href="#contact" aria-label="Contact"><i class="lni lni-envelope"></i><span class="d-none d-sm-inline">Contact</span></a>
       </div>
     </nav>
 
-    <header class="site-header d-flex align-items-center justify-content-center fs-4 rounded-0">Header</header>
+    <header class="site-header d-flex align-items-center justify-content-center fs-4">Header</header>
 
-    <div class="row g-0 middle-row">
-      <aside class="aside aside-left col-12 col-md-2 d-flex align-items-start justify-content-center pt-3 fs-4 rounded-0">Aside 1</aside>
+    <div class="row g-0 middle-row flex-nowrap flex-md-row flex-column">
+      <aside class="aside aside-left col-12 col-md-2 d-flex align-items-start justify-content-center pt-3 fs-4">Aside 1</aside>
 
-      <main class="content col-12 col-md-8 d-flex align-items-start rounded-0">
-        <p class="hero-copy fs-3 ms-3 ms-md-5 mt-4 mt-md-5 mb-0">
-          The desert sky was blood red. She held on tight, as we sped, through the Valley of the Dead Vultures, into an underworld of sub-culture.
-        </p>
+      <main class="content col-12 col-md-8 d-flex align-items-stretch">
+        <div class="game-shell">
+          <canvas id="game" aria-label="First-person darts game"></canvas>
+          <div class="hud">
+            <div class="hud-top">
+              <div class="panel">
+                <div class="title">Darts</div>
+                <div class="small">Aim with mouse or touch. Hold Space or click to charge, then release to throw.</div>
+              </div>
+              <div class="panel text-end">
+                <div class="title">Current Player</div>
+                <div class="score" id="currentPlayerLabel">Player 1</div>
+              </div>
+            </div>
+
+            <div class="center-hint" id="hint">Aim at the board and throw</div>
+
+            <div class="hud-bottom">
+              <div class="panel">
+                <div class="title">Scores</div>
+                <div class="small"><span class="player-pill">Player 1: <strong id="p1Score">0</strong></span></div>
+                <div class="small mt-2"><span class="player-pill">Player 2: <strong id="p2Score">0</strong></span></div>
+              </div>
+              <div class="panel text-end d-flex flex-column gap-2 align-items-end">
+                <div>
+                  <div class="title">Darts Left</div>
+                  <div class="score fs-3" id="dartsLeft">3</div>
+                </div>
+                <div>
+                  <div class="title">Last Throw</div>
+                  <div class="small" id="lastThrow">Ready</div>
+                </div>
+                <div class="switch-wrap">
+                  <button class="switch-btn" id="switchPlayer" type="button">Switch Player</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
 
-      <aside class="aside aside-right col-12 col-md-2 d-flex align-items-start justify-content-center pt-3 fs-4 rounded-0">Aside 2</aside>
+      <aside class="aside aside-right col-12 col-md-2 d-flex align-items-start justify-content-center pt-3 fs-4">Aside 2</aside>
     </div>
 
-    <footer class="site-footer d-flex align-items-center justify-content-center fs-4 rounded-0">Footer</footer>
+    <footer class="site-footer d-flex align-items-center justify-content-center fs-4">Footer</footer>
   </div>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById('game');
+      const ctx = canvas.getContext('2d');
+      const hintEl = document.getElementById('hint');
+      const lastThrowEl = document.getElementById('lastThrow');
+      const dartsLeftEl = document.getElementById('dartsLeft');
+      const currentPlayerLabelEl = document.getElementById('currentPlayerLabel');
+      const p1ScoreEl = document.getElementById('p1Score');
+      const p2ScoreEl = document.getElementById('p2Score');
+      const switchPlayerBtn = document.getElementById('switchPlayer');
+
+      const boardNumbers = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+      const state = {
+        w: 0,
+        h: 0,
+        dpr: 1,
+        scores: [0, 0],
+        currentPlayer: 0,
+        dartsLeft: 3,
+        charging: false,
+        charge: 0,
+        aimX: 0,
+        aimY: 0,
+        sway: 0,
+        dartInFlight: null,
+        resolveTimer: null,
+        boardHit: null,
+        lastResult: 'Ready'
+      };
+
+      window.__dartsState = state;
+
+      function currentPlayerName() {
+        return `Player ${state.currentPlayer + 1}`;
+      }
+
+      function syncHud() {
+        p1ScoreEl.textContent = String(state.scores[0]);
+        p2ScoreEl.textContent = String(state.scores[1]);
+        dartsLeftEl.textContent = String(state.dartsLeft);
+        currentPlayerLabelEl.textContent = currentPlayerName();
+      }
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        state.w = rect.width;
+        state.h = rect.height;
+        state.dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.max(1, Math.floor(rect.width * state.dpr));
+        canvas.height = Math.max(1, Math.floor(rect.height * state.dpr));
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+        if (!state.aimX) state.aimX = state.w * 0.5;
+        if (!state.aimY) state.aimY = state.h * 0.42;
+      }
+
+      function boardGeometry() {
+        const size = Math.min(state.w, state.h) * 0.48;
+        const cx = state.w * 0.5;
+        const cy = state.h * 0.38;
+        return {
+          cx,
+          cy,
+          size,
+          bull: size * 0.055,
+          outerBull: size * 0.12,
+          tripleInner: size * 0.36,
+          tripleOuter: size * 0.42,
+          doubleInner: size * 0.6,
+          doubleOuter: size * 0.68
+        };
+      }
+
+      function setAim(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        state.aimX = Math.max(0, Math.min(state.w, clientX - rect.left));
+        state.aimY = Math.max(0, Math.min(state.h, clientY - rect.top));
+      }
+
+      function getBoardScore(dx, dy, geo) {
+        const dist = Math.hypot(dx, dy);
+        if (dist > geo.doubleOuter) return 0;
+        if (dist <= geo.bull) return 50;
+        if (dist <= geo.outerBull) return 25;
+
+        const sector = Math.floor((((Math.atan2(-dy, dx) * 180 / Math.PI) + 360 + 9) % 360) / 18);
+        const base = boardNumbers[sector];
+        if (dist >= geo.doubleInner && dist <= geo.doubleOuter) return base * 2;
+        if (dist >= geo.tripleInner && dist <= geo.tripleOuter) return base * 3;
+        return base;
+      }
+
+      function throwDart() {
+        if (state.dartInFlight || state.dartsLeft <= 0) return;
+
+        const geo = boardGeometry();
+        const aimDx = (state.aimX - geo.cx) / geo.size;
+        const aimDy = (state.aimY - geo.cy) / geo.size;
+        const targetX = geo.cx + aimDx * geo.size * 0.5;
+        const targetY = geo.cy + aimDy * geo.size * 0.5;
+
+        state.dartInFlight = {
+          t: 0,
+          startX: state.w * 0.5,
+          startY: state.h * 0.88,
+          targetX,
+          targetY,
+          speed: 0.012 + state.charge * 0.006,
+          curve: 0.18 + state.charge * 0.36,
+          launchedAt: performance.now()
+        };
+        if (state.resolveTimer) clearTimeout(state.resolveTimer);
+        state.resolveTimer = setTimeout(() => {
+          if (state.dartInFlight) {
+            state.dartInFlight.t = 1;
+            resolveThrow();
+          }
+        }, 850 + state.charge * 450);
+        state.charging = false;
+        state.charge = 0;
+        state.lastResult = 'Thrown';
+        hintEl.textContent = 'Flying...';
+      }
+
+      function resolveThrow() {
+        if (state.resolveTimer) {
+          clearTimeout(state.resolveTimer);
+          state.resolveTimer = null;
+        }
+        const geo = boardGeometry();
+        const dx = state.dartInFlight.targetX - geo.cx;
+        const dy = state.dartInFlight.targetY - geo.cy;
+        const score = getBoardScore(dx, dy, geo);
+        state.scores[state.currentPlayer] += score;
+        state.boardHit = { x: state.dartInFlight.targetX, y: state.dartInFlight.targetY, score };
+        state.lastResult = score ? `Hit for ${score}` : 'Miss';
+        lastThrowEl.textContent = state.lastResult;
+        state.dartInFlight = null;
+        state.dartsLeft -= 1;
+        syncHud();
+
+        if (state.dartsLeft <= 0) {
+          hintEl.textContent = 'Round complete. Use Switch Player or reset with Enter.';
+        } else {
+          hintEl.textContent = 'Aim again and throw';
+        }
+      }
+
+      function resetPlayerTurn() {
+        if (state.resolveTimer) {
+          clearTimeout(state.resolveTimer);
+          state.resolveTimer = null;
+        }
+        state.dartsLeft = 3;
+        state.charging = false;
+        state.charge = 0;
+        state.dartInFlight = null;
+        state.boardHit = null;
+        state.lastResult = 'Ready';
+        lastThrowEl.textContent = 'Ready';
+        hintEl.textContent = `Aim at the board and throw as ${currentPlayerName()}`;
+        syncHud();
+      }
+
+      function switchPlayer() {
+        if (state.dartInFlight) return;
+        state.currentPlayer = 1 - state.currentPlayer;
+        resetPlayerTurn();
+      }
+
+      window.__dartsActions = {
+        setAim,
+        throwDart,
+        switchPlayer,
+        resetPlayerTurn
+      };
+
+      function drawRoom() {
+        const w = state.w;
+        const h = state.h;
+
+        const wall = ctx.createLinearGradient(0, 0, 0, h);
+        wall.addColorStop(0, '#26323b');
+        wall.addColorStop(0.45, '#1a2026');
+        wall.addColorStop(1, '#101419');
+        ctx.fillStyle = wall;
+        ctx.fillRect(0, 0, w, h);
+
+        const floorGrad = ctx.createLinearGradient(0, h * 0.58, 0, h);
+        floorGrad.addColorStop(0, '#272018');
+        floorGrad.addColorStop(1, '#12100d');
+        ctx.fillStyle = floorGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, h * 0.58);
+        ctx.lineTo(w, h * 0.58);
+        ctx.lineTo(w * 0.92, h);
+        ctx.lineTo(w * 0.08, h);
+        ctx.closePath();
+        ctx.fill();
+
+        const glow = ctx.createRadialGradient(w * 0.5, h * 0.36, 20, w * 0.5, h * 0.36, Math.max(w, h) * 0.6);
+        glow.addColorStop(0, 'rgba(255,255,255,0.1)');
+        glow.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.07)';
+        for (let i = 0; i < 7; i++) {
+          const x = (i * w / 6) - 30;
+          ctx.fillRect(x, 18, 4, h - 32);
+        }
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 6; i++) {
+          const y = h * 0.58 + i * 28;
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y - i * 2);
+          ctx.stroke();
+        }
+      }
+
+      function drawBoard() {
+        const geo = boardGeometry();
+        const { cx, cy } = geo;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(1.02, 0.96);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.beginPath();
+        ctx.arc(0, 0, geo.doubleOuter + 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(-Math.PI / 20);
+        for (let i = 0; i < 20; i++) {
+          const a0 = (Math.PI * 2 / 20) * i;
+          const a1 = a0 + (Math.PI * 2 / 20);
+          const color = i % 2 === 0 ? '#d8cfd0' : '#222';
+
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.arc(0, 0, geo.doubleOuter, a0, a1);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.arc(0, 0, geo.doubleOuter, a0, a1);
+          ctx.closePath();
+          ctx.stroke();
+
+          const sectorFill = i % 2 === 0 ? '#d52d2d' : '#f7f2ea';
+          ctx.fillStyle = sectorFill;
+          ctx.beginPath();
+          ctx.arc(0, 0, geo.doubleInner, a0 + 0.008, a1 - 0.008);
+          ctx.arc(0, 0, geo.tripleOuter, a1 - 0.008, a0 + 0.008, true);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        for (let i = 0; i < 20; i++) {
+          const start = (Math.PI * 2 / 20) * i - Math.PI / 20;
+          const end = start + Math.PI * 2 / 20;
+          ctx.strokeStyle = 'rgba(15,15,15,0.88)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.arc(0, 0, geo.doubleOuter, start, end);
+          ctx.closePath();
+          ctx.stroke();
+
+          ctx.strokeStyle = i % 2 === 0 ? '#5b4c17' : '#24311d';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(0, 0, geo.tripleOuter, start, end);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(0, 0, geo.doubleInner, start, end);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = '#0f341e';
+        ctx.beginPath();
+        ctx.arc(0, 0, geo.outerBull, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#c8b90f';
+        ctx.beginPath();
+        ctx.arc(0, 0, geo.bull, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, geo.doubleOuter, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        const glow2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, geo.doubleOuter + 45);
+        glow2.addColorStop(0, 'rgba(255, 242, 130, 0.10)');
+        glow2.addColorStop(1, 'rgba(255, 242, 130, 0)');
+        ctx.fillStyle = glow2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, geo.doubleOuter + 45, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawAim() {
+        const x = state.aimX;
+        const y = state.aimY;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 213, 74, 0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, 12, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x - 20, y);
+        ctx.lineTo(x - 8, y);
+        ctx.moveTo(x + 8, y);
+        ctx.lineTo(x + 20, y);
+        ctx.moveTo(x, y - 20);
+        ctx.lineTo(x, y - 8);
+        ctx.moveTo(x, y + 8);
+        ctx.lineTo(x, y + 20);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawThrow() {
+        if (!state.dartInFlight) return;
+        const d = state.dartInFlight;
+        const t = Math.min(1, d.t);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const x = d.startX + (d.targetX - d.startX) * eased;
+        const yBase = d.startY + (d.targetY - d.startY) * eased;
+        const drop = Math.sin(t * Math.PI) * (state.h * (0.05 + d.curve * 0.12));
+        const y = yBase + drop;
+        const armX = state.w * 0.5;
+        const armY = state.h * 0.89;
+        const dartLength = 42;
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(armX, armY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(x, y);
+        const angle = Math.atan2(y - d.startY, x - d.startX);
+        ctx.rotate(angle);
+        ctx.strokeStyle = '#e8e8e8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-dartLength * 0.45, 0);
+        ctx.lineTo(dartLength * 0.42, 0);
+        ctx.stroke();
+        ctx.fillStyle = '#c52f2f';
+        ctx.beginPath();
+        ctx.moveTo(-dartLength * 0.45, 0);
+        ctx.lineTo(-dartLength * 0.3, -5);
+        ctx.lineTo(-dartLength * 0.3, 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#939aa3';
+        ctx.fillRect(dartLength * 0.15, -2, 10, 4);
+        ctx.fillStyle = '#666';
+        ctx.fillRect(dartLength * 0.2, -6, 3, 12);
+        ctx.restore();
+
+        ctx.restore();
+      }
+
+      function drawHands() {
+        const w = state.w;
+        const h = state.h;
+        const baseY = h * 0.88;
+        const sway = Math.sin(state.sway) * 8;
+        const chargeOffset = state.charging ? state.charge * 18 : 0;
+
+        ctx.save();
+        ctx.fillStyle = '#2c1a14';
+        ctx.beginPath();
+        ctx.ellipse(w * 0.42, baseY + sway, 90, 52, -0.08, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(w * 0.58, baseY + sway, 90, 52, 0.08, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#7b4f3c';
+        ctx.beginPath();
+        ctx.roundRect(w * 0.47 - 22, baseY - 18 - chargeOffset, 44, 34, 14);
+        ctx.fill();
+
+        ctx.fillStyle = '#d8b49a';
+        ctx.beginPath();
+        ctx.roundRect(w * 0.47 - 6, baseY - 56 - chargeOffset, 12, 44, 5);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.roundRect(w * 0.47 - 20, baseY - 46 - chargeOffset, 40, 10, 4);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.47 + 20, baseY - 24 - chargeOffset);
+        ctx.lineTo(w * 0.47 + 52, baseY - 58 - chargeOffset);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff8c42';
+        ctx.beginPath();
+        ctx.moveTo(w * 0.47 + 50, baseY - 60 - chargeOffset);
+        ctx.lineTo(w * 0.47 + 74, baseY - 66 - chargeOffset);
+        ctx.lineTo(w * 0.47 + 62, baseY - 40 - chargeOffset);
+        ctx.closePath();
+        ctx.fill();
+
+        if (state.charging) {
+          const flame = 16 + state.charge * 28;
+          ctx.fillStyle = 'rgba(255, 200, 80, 0.9)';
+          ctx.beginPath();
+          ctx.ellipse(w * 0.47 + 58, baseY - 62 - chargeOffset, flame * 0.45, flame, 0.6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255, 124, 0, 0.85)';
+          ctx.beginPath();
+          ctx.ellipse(w * 0.47 + 58, baseY - 62 - chargeOffset, flame * 0.25, flame * 0.7, 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function drawForeground() {
+        const w = state.w;
+        const h = state.h;
+        const vignette = ctx.createRadialGradient(w * 0.5, h * 0.42, h * 0.2, w * 0.5, h * 0.42, h * 0.9);
+        vignette.addColorStop(0, 'rgba(0,0,0,0)');
+        vignette.addColorStop(1, 'rgba(0,0,0,0.35)');
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      function update(dt) {
+        state.sway += dt * (state.charging ? 10 : 3);
+        if (state.charging) {
+          state.charge = Math.min(1, state.charge + dt * 0.9);
+        }
+
+        if (state.dartInFlight) {
+          state.dartInFlight.t += dt * 1.4 / Math.max(0.7, state.dartInFlight.speed * 60);
+          if (state.dartInFlight.t >= 1) resolveThrow();
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, state.w, state.h);
+        drawRoom();
+        drawBoard();
+
+        if (state.boardHit) {
+          ctx.save();
+          ctx.fillStyle = state.boardHit.score >= 25 ? 'rgba(255, 213, 74, 0.95)' : 'rgba(255,255,255,0.8)';
+          ctx.beginPath();
+          ctx.arc(state.boardHit.x, state.boardHit.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        drawAim();
+        drawThrow();
+        drawHands();
+        drawForeground();
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.font = 'bold 14px Times New Roman, serif';
+        ctx.fillText('Board: 20 / 1 / 18 / 4 / ...', 16, state.h - 16);
+        ctx.restore();
+      }
+
+      function resetIfNeeded() {
+        if (state.dartsLeft <= 0 && !state.dartInFlight) {
+          resetPlayerTurn();
+        }
+      }
+
+      canvas.addEventListener('pointermove', (event) => setAim(event.clientX, event.clientY));
+      canvas.addEventListener('pointerdown', (event) => {
+        setAim(event.clientX, event.clientY);
+        if (state.dartsLeft <= 0) {
+          resetPlayerTurn();
+          return;
+        }
+        if (!state.dartInFlight) {
+          state.charging = true;
+          state.charge = 0;
+          hintEl.textContent = 'Hold, then release to throw';
+        }
+      });
+      canvas.addEventListener('pointerup', () => {
+        if (state.charging) throwDart();
+      });
+      canvas.addEventListener('pointerleave', () => {
+        if (state.charging) throwDart();
+      });
+
+      switchPlayerBtn.addEventListener('click', switchPlayer);
+
+      window.addEventListener('keydown', (event) => {
+        if (event.key === ' ' || event.key === 'Spacebar') {
+          event.preventDefault();
+          if (state.dartsLeft <= 0) {
+            resetPlayerTurn();
+            return;
+          }
+          state.charging = true;
+          state.charge = 0;
+          hintEl.textContent = 'Hold, then release to throw';
+        }
+        if (event.key === 'Enter' && state.dartsLeft <= 0) {
+          resetPlayerTurn();
+        }
+        if (event.key.toLowerCase() === 's') {
+          switchPlayer();
+        }
+      });
+
+      window.addEventListener('keyup', (event) => {
+        if (event.key === ' ' || event.key === 'Spacebar') {
+          event.preventDefault();
+          if (state.charging) throwDart();
+        }
+      });
+
+      window.addEventListener('resize', resize);
+
+      resize();
+      syncHud();
+      resetPlayerTurn();
+
+      let last = performance.now();
+      setInterval(() => {
+        const now = performance.now();
+        const dt = Math.min(0.033, (now - last) / 1000);
+        last = now;
+        update(dt);
+        draw();
+        resetIfNeeded();
+      }, 16);
+    })();
+  </script>
 </body>
 </html>
